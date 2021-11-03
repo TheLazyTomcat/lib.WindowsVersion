@@ -246,7 +246,7 @@ Function GetVersionEx(lpVersionInfo: POSVersionInfoEx): BOOL; overload; stdcall;
 
 Function VerifyVersionInfoW(lpVersionInfo: POSVersionInfoExW; dwTypeMask: DWORD; dwlConditionMask: UInt64): BOOL; stdcall; external kernel32;
 Function VerifyVersionInfoA(lpVersionInfo: POSVersionInfoExA; dwTypeMask: DWORD; dwlConditionMask: UInt64): BOOL; stdcall; external kernel32;
-Function VerifyVersionInfo(lpVersionInfo: POSVersionInfoEx; dwTypeMask: DWORD; dwlConditionMask: UInt64): BOOL; overload; stdcall;
+Function VerifyVersionInfo(lpVersionInfo: POSVersionInfoEx; dwTypeMask: DWORD; dwlConditionMask: UInt64): BOOL; stdcall;
   external kernel32 name{$IFDEF Unicode}'VerifyVersionInfoW'{$ELSE}'VerifyVersionInfoA'{$ENDIF};
 
 Function VerSetConditionMask(ConditionMask: UInt64; TypeMask: DWORD; Condition: Byte): UInt64; stdcall; external kernel32;
@@ -260,42 +260,12 @@ Function GetVersionEx(out VersionInfo: TOSVersionInfoEx): Boolean; overload;
 
 {===============================================================================
 --------------------------------------------------------------------------------
-                                 Version helper
+                                  Product info
 --------------------------------------------------------------------------------
 ===============================================================================}
 {===============================================================================
-    Version helper - functions declaration
+    Product info - product types
 ===============================================================================}
-{
-  Implementation of version helper functions and macros from Windows SDK file
-  VersionHelpers.h.
-}
-Function IsWindowsVersionOrGreater(MajorVersion,MinorVersion,ServicePackMajor: Word): Boolean;
-
-{
-  WARNING - Windows XP 64bit is completely different system than WinXP 32bit.
-            IsWindowsXPSP3OrGreater will return true on 64bit XP even when only
-            SP2 (or lower) is installed, that is because this system has
-            version 5.2 (it is based on Windows Server 2003), which is above
-            5.1 for 32bit XP.
-}
-Function IsWindowsXPOrGreater: Boolean;
-Function IsWindowsXPSP1OrGreater: Boolean;
-Function IsWindowsXPSP2OrGreater: Boolean;
-Function IsWindowsXPSP3OrGreater: Boolean;
-Function IsWindowsVistaOrGreater: Boolean;
-Function IsWindowsVistaSP1OrGreater: Boolean;
-Function IsWindowsVistaSP2OrGreater: Boolean;
-Function IsWindows7OrGreater: Boolean;
-Function IsWindows7SP1OrGreater: Boolean;
-Function IsWindows8OrGreater: Boolean;
-Function IsWindows8Point1OrGreater: Boolean;
-Function IsWindowsThresholdOrGreater: Boolean;
-Function IsWindows10OrGreater: Boolean;
-Function IsWindowsServer: Boolean;
-// Sure, there are Windows 11, but i do not have SDK for them atm., so later...
-
-
 const
   PRODUCT_UNDEFINED                           = $00000000;
 
@@ -424,6 +394,55 @@ const
   PRODUCT_UNLICENSED                          = $ABCDABCD;
 
 {===============================================================================
+    Product info - functions declaration
+===============================================================================}
+{
+  GetProductInfo if wrapper for function of the same name residing kernel32.
+  This function was introduced in Windows Vista, but I wanted the code to work
+  on WinXP too.
+  So in systems where this function is not present, it will alvays return true
+  and ReturnedProductType will be set to PRODUCT_UNDEFINED.
+}
+Function GetProductInfo(OSMajorVersion,OSMinorVersion,SpMajorVersion,SpMinorVersion: DWORD; out ReturnedProductType: DWORD): Boolean;
+
+{===============================================================================
+--------------------------------------------------------------------------------
+                                 Version helper
+--------------------------------------------------------------------------------
+===============================================================================}
+{===============================================================================
+    Version helper - functions declaration
+===============================================================================}
+{
+  Implementation of version helper functions and macros from Windows SDK file
+  VersionHelpers.h.
+}
+Function IsWindowsVersionOrGreater(MajorVersion,MinorVersion,ServicePackMajor: Word): Boolean;
+
+{
+  WARNING - Windows XP 64bit is completely different system than WinXP 32bit.
+            IsWindowsXPSP3OrGreater will return true on 64bit XP even when only
+            SP2 (or lower) is installed, that is because this system has
+            version 5.2 (it is based on Windows Server 2003), which is above
+            5.1 for 32bit XP.
+}
+Function IsWindowsXPOrGreater: Boolean;
+Function IsWindowsXPSP1OrGreater: Boolean;
+Function IsWindowsXPSP2OrGreater: Boolean;
+Function IsWindowsXPSP3OrGreater: Boolean;
+Function IsWindowsVistaOrGreater: Boolean;
+Function IsWindowsVistaSP1OrGreater: Boolean;
+Function IsWindowsVistaSP2OrGreater: Boolean;
+Function IsWindows7OrGreater: Boolean;
+Function IsWindows7SP1OrGreater: Boolean;
+Function IsWindows8OrGreater: Boolean;
+Function IsWindows8Point1OrGreater: Boolean;
+Function IsWindowsThresholdOrGreater: Boolean;
+Function IsWindows10OrGreater: Boolean;
+Function IsWindowsServer: Boolean;
+// Sure, there are Windows 11, but i do not have SDK for them atm., so later...
+
+{===============================================================================
 --------------------------------------------------------------------------------
                                  Other utilities
 --------------------------------------------------------------------------------
@@ -434,11 +453,24 @@ const
 
 Function IsWoW64Process(ProcessHandle: THandle): Boolean;
 Function IsRunningUnderWoW64(ProcessID: DWORD): Boolean; overload;
-Function IsRunningUnderWoW64: Boolean; overload;
+Function IsRunningUnderWoW64: Boolean; overload;  // for current process
 
 //------------------------------------------------------------------------------
+{
+  To be used to check whether a particular function is present in a given DLL.
+  Intended to check functions in system libraries, but can be used to check
+  presence of a function in any DLL.
+}
+Function FunctionIsPresent(const LibraryName,FunctionName: String): Boolean;
 
-//Function FunctionIsPresent(const LibraryName,FunctionName: String): Boolean;
+//------------------------------------------------------------------------------
+{
+  Following functions are checking system properties using metrics.
+}
+Function IsServerR2: Boolean;             // Windows Server 2003 R2
+Function IsMediaCenterEdition: Boolean;   // Windows XP Media Center Edition
+Function IsStarterEdition: Boolean;       // Windows XP Starter Edition
+Function IsTabletPCEdition: Boolean;      // Windows XP Tablet PC Edition
 
 implementation
 
@@ -489,6 +521,39 @@ begin
 FillChar(Addr(VersionInfo)^,SizeOf(VersionInfo),0);
 VersionInfo.dwOSVersionInfoSize := SizeOf(VersionInfo);
 Result := GetVersionEx(@VersionInfo);
+end;
+
+{===============================================================================
+--------------------------------------------------------------------------------
+                                  Product info
+--------------------------------------------------------------------------------
+===============================================================================}
+{===============================================================================
+    Product info - functions implementation
+===============================================================================}
+
+Function GetProductInfo(OSMajorVersion,OSMinorVersion,SpMajorVersion,SpMinorVersion: DWORD; out ReturnedProductType: DWORD): Boolean;
+type
+  TGetProductInfoFce = Function(dwOSMajorVersion: DWORD; dwOSMinorVersion: DWORD; dwSpMajorVersion:
+    DWORD; dwSpMinorVersion: DWORD; pdwReturnedProductType: PDWORD): BOOL; stdcall;
+var
+  LibHandle:          THandle;
+  GetProductInfoFce:  TGetProductInfoFce;
+begin
+LibHandle := LoadLibrary(kernel32);
+If LibHandle <> 0 then
+  try
+    GetProductInfoFce := TGetProductInfoFce(GetProcAddress(LibHandle,'GetProductInfo'));
+    If not Assigned(GetProductInfoFce) then
+      begin
+        ReturnedProductType := PRODUCT_UNDEFINED;
+        Result := True;
+      end
+    else Result := GetProductInfoFce(OSMajorVersion,OSMinorVersion,SpMajorVersion,SpMinorVersion,@ReturnedProductType);
+  finally
+    FreeLibrary(LibHandle);
+  end
+else raise EWVSystemError.CreateFmt('GetProductInfo: Cannot load kernel32 library (%.8x).',[GetLastError]);
 end;
 
 {===============================================================================
@@ -643,23 +708,29 @@ end;
                                  Other utilities
 --------------------------------------------------------------------------------
 ===============================================================================}
+const
+  SM_TABLETPC    = 86;
+  SM_MEDIACENTER = 87;
+  SM_STARTER     = 88;
+  SM_SERVERR2    = 89;
+  
 {===============================================================================
     Other utilities - functions implementation
 ===============================================================================}
 
 Function IsWoW64Process(ProcessHandle: THandle): Boolean;
 type
-  TIsWow64Process = Function(hProcess: THandle; Wow64Process: PBOOL): BOOL; stdcall;
+  TIsWow64ProcessFce = Function(hProcess: THandle; Wow64Process: PBOOL): BOOL; stdcall;
 var
   ModuleHandle:       THandle;
-  IsWow64ProcessFce:  TIsWow64Process;
+  IsWow64ProcessFce:  TIsWow64ProcessFce;
   ResultValue:        BOOL;
 begin
 Result := False;
 ModuleHandle := GetModuleHandle('kernel32.dll');
 If ModuleHandle <> 0 then
   begin
-    IsWow64ProcessFce := TIsWow64Process(GetProcAddress(ModuleHandle,'IsWow64Process'));
+    IsWow64ProcessFce := TIsWow64ProcessFce(GetProcAddress(ModuleHandle,'IsWow64Process'));
     If Assigned(IsWow64ProcessFce) then
       If IsWow64ProcessFce(ProcessHandle,@ResultValue) then
         Result := ResultValue
@@ -670,7 +741,7 @@ else raise EWVSystemError.CreateFmt('IsWoW64Process: Unable to get handle to mod
 
 end;
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//------------------------------------------------------------------------------
 
 Function IsRunningUnderWoW64(ProcessID: DWORD): Boolean;
 var
@@ -688,6 +759,50 @@ end;
 Function IsRunningUnderWoW64: Boolean;
 begin
 Result := IsWoW64Process(GetCurrentProcess);
+end;
+
+//------------------------------------------------------------------------------
+
+Function FunctionIsPresent(const LibraryName,FunctionName: String): Boolean;
+var
+  LibHandle:  THandle;
+begin
+LibHandle := LoadLibrary(PChar(StrToSys(LibraryName)));
+If LibHandle <> 0 then
+  try
+    Result := Assigned(GetProcAddress(LibHandle,PChar(StrToSys(FunctionName))));
+  finally
+    FreeLibrary(LibHandle);
+  end
+else raise EWVSystemError.CreateFmt('FunctionIsPresent: Cannot load library (%s) (%.8x).',[LibraryName,GetLastError]);
+end;
+
+//------------------------------------------------------------------------------
+
+Function IsServerR2: Boolean;
+begin
+Result := GetSystemMetrics(SM_SERVERR2) <> 0;
+end;
+
+//------------------------------------------------------------------------------
+
+Function IsMediaCenterEdition: Boolean;
+begin
+Result := GetSystemMetrics(SM_MEDIACENTER) <> 0;
+end;
+
+//------------------------------------------------------------------------------
+
+Function IsStarterEdition: Boolean;
+begin
+Result := GetSystemMetrics(SM_STARTER) <> 0;
+end;
+
+//------------------------------------------------------------------------------
+
+Function IsTabletPCEdition: Boolean;
+begin
+Result := GetSystemMetrics(SM_TABLETPC) <> 0;
 end;
 
 end.
