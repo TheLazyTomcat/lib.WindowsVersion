@@ -1,3 +1,46 @@
+{-------------------------------------------------------------------------------
+
+  This Source Code Form is subject to the terms of the Mozilla Public
+  License, v. 2.0. If a copy of the MPL was not distributed with this
+  file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+-------------------------------------------------------------------------------}
+{===============================================================================
+
+  Windows version
+
+    This library provides WinAPI functions, constants and types used to obtain
+    and/or verify version of Windows operating system the program is currently
+    running on.
+
+    It also implements and provides version helper functions and macros along
+    with some utility functions.
+
+  Version 1.0 (2021-11-04)
+
+  Last change 2021-11-04
+
+  ©2021 František Milt
+
+  Contacts:
+    František Milt: frantisek.milt@gmail.com
+
+  Support:
+    If you find this code useful, please consider supporting its author(s) by
+    making a small donation using the following link(s):
+
+      https://www.paypal.me/FMilt
+
+  Changelog:
+    For detailed changelog and history please refer to this git repository:
+
+      github.com/TheLazyTomcat/Lib.WindowsVersion
+
+  Dependencies:
+    AuxTypes - github.com/TheLazyTomcat/Lib.AuxTypes
+    StrRect  - github.com/TheLazyTomcat/Lib.StrRect
+
+===============================================================================}
 unit WindowsVersion;
 
 {$IF not(defined(WINDOWS) or defined(MSWINDOWS))}
