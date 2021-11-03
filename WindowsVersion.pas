@@ -12,8 +12,16 @@ unit WindowsVersion;
 interface
 
 uses
-  Windows,
+  SysUtils, Windows,
   AuxTypes;
+
+{===============================================================================
+    Library-specific exceptions
+===============================================================================}
+type
+  EWVException = class(Exception);
+
+  EWVSystemError = class(EWVException);
 
 {===============================================================================
 --------------------------------------------------------------------------------
@@ -39,14 +47,14 @@ const
   WIN32_WINNT_NT4          = $0400;
   WIN32_WINNT_WIN2K        = $0500;
   WIN32_WINNT_WINXP        = $0501;
-  WIN32_WINNT_WS03         = $0502;
+  WIN32_WINNT_WS03         = $0502; // also Windows XP 64bit
   WIN32_WINNT_WIN6         = $0600;
   WIN32_WINNT_VISTA        = $0600;
   WIN32_WINNT_WS08         = $0600;
   WIN32_WINNT_LONGHORN     = $0600;
   WIN32_WINNT_WIN7         = $0601;
   WIN32_WINNT_WIN8         = $0602;
-  WIN32_WINNT_WINBLUE      = $0603;
+  WIN32_WINNT_WINBLUE      = $0603; // Windows 8.1
   WIN32_WINNT_WINTHRESHOLD = $0A00;
   WIN32_WINNT_WIN10        = $0A00;
 
@@ -259,11 +267,18 @@ Function GetVersionEx(out VersionInfo: TOSVersionInfoEx): Boolean; overload;
     Version helper - functions declaration
 ===============================================================================}
 {
-  Implementation if version helper functions and macros from Windows SDK file
+  Implementation of version helper functions and macros from Windows SDK file
   VersionHelpers.h.
 }
-Function IsWindowsVersionOrGreater(wMajorVersion,wMinorVersion,wServicePackMajor: Word): Boolean;
+Function IsWindowsVersionOrGreater(MajorVersion,MinorVersion,ServicePackMajor: Word): Boolean;
 
+{
+  WARNING - Windows XP 64bit is completely different system than WinXP 32bit.
+            IsWindowsXPSP3OrGreater will return true on 64bit XP even when only
+            SP2 (or lower) is installed, that is because this system has
+            version 5.2 (it is based on Windows Server 2003), which is above
+            5.1 for 32bit XP.
+}
 Function IsWindowsXPOrGreater: Boolean;
 Function IsWindowsXPSP1OrGreater: Boolean;
 Function IsWindowsXPSP2OrGreater: Boolean;
@@ -278,141 +293,157 @@ Function IsWindows8Point1OrGreater: Boolean;
 Function IsWindowsThresholdOrGreater: Boolean;
 Function IsWindows10OrGreater: Boolean;
 Function IsWindowsServer: Boolean;
+// Sure, there are Windows 11, but i do not have SDK for them atm., so later...
 
-// I do not have SDK for Windows 11 atm, will fill it later
 
-(*
 const
-#define PRODUCT_UNDEFINED                           0x00000000
+  PRODUCT_UNDEFINED                           = $00000000;
 
-#define PRODUCT_ULTIMATE                            0x00000001
-#define PRODUCT_HOME_BASIC                          0x00000002
-#define PRODUCT_HOME_PREMIUM                        0x00000003
-#define PRODUCT_ENTERPRISE                          0x00000004
-#define PRODUCT_HOME_BASIC_N                        0x00000005
-#define PRODUCT_BUSINESS                            0x00000006
-#define PRODUCT_STANDARD_SERVER                     0x00000007
-#define PRODUCT_DATACENTER_SERVER                   0x00000008
-#define PRODUCT_SMALLBUSINESS_SERVER                0x00000009
-#define PRODUCT_ENTERPRISE_SERVER                   0x0000000A
-#define PRODUCT_STARTER                             0x0000000B
-#define PRODUCT_DATACENTER_SERVER_CORE              0x0000000C
-#define PRODUCT_STANDARD_SERVER_CORE                0x0000000D
-#define PRODUCT_ENTERPRISE_SERVER_CORE              0x0000000E
-#define PRODUCT_ENTERPRISE_SERVER_IA64              0x0000000F
-#define PRODUCT_BUSINESS_N                          0x00000010
-#define PRODUCT_WEB_SERVER                          0x00000011
-#define PRODUCT_CLUSTER_SERVER                      0x00000012
-#define PRODUCT_HOME_SERVER                         0x00000013
-#define PRODUCT_STORAGE_EXPRESS_SERVER              0x00000014
-#define PRODUCT_STORAGE_STANDARD_SERVER             0x00000015
-#define PRODUCT_STORAGE_WORKGROUP_SERVER            0x00000016
-#define PRODUCT_STORAGE_ENTERPRISE_SERVER           0x00000017
-#define PRODUCT_SERVER_FOR_SMALLBUSINESS            0x00000018
-#define PRODUCT_SMALLBUSINESS_SERVER_PREMIUM        0x00000019
-#define PRODUCT_HOME_PREMIUM_N                      0x0000001A
-#define PRODUCT_ENTERPRISE_N                        0x0000001B
-#define PRODUCT_ULTIMATE_N                          0x0000001C
-#define PRODUCT_WEB_SERVER_CORE                     0x0000001D
-#define PRODUCT_MEDIUMBUSINESS_SERVER_MANAGEMENT    0x0000001E
-#define PRODUCT_MEDIUMBUSINESS_SERVER_SECURITY      0x0000001F
-#define PRODUCT_MEDIUMBUSINESS_SERVER_MESSAGING     0x00000020
-#define PRODUCT_SERVER_FOUNDATION                   0x00000021
-#define PRODUCT_HOME_PREMIUM_SERVER                 0x00000022
-#define PRODUCT_SERVER_FOR_SMALLBUSINESS_V          0x00000023
-#define PRODUCT_STANDARD_SERVER_V                   0x00000024
-#define PRODUCT_DATACENTER_SERVER_V                 0x00000025
-#define PRODUCT_ENTERPRISE_SERVER_V                 0x00000026
-#define PRODUCT_DATACENTER_SERVER_CORE_V            0x00000027
-#define PRODUCT_STANDARD_SERVER_CORE_V              0x00000028
-#define PRODUCT_ENTERPRISE_SERVER_CORE_V            0x00000029
-#define PRODUCT_HYPERV                              0x0000002A
-#define PRODUCT_STORAGE_EXPRESS_SERVER_CORE         0x0000002B
-#define PRODUCT_STORAGE_STANDARD_SERVER_CORE        0x0000002C
-#define PRODUCT_STORAGE_WORKGROUP_SERVER_CORE       0x0000002D
-#define PRODUCT_STORAGE_ENTERPRISE_SERVER_CORE      0x0000002E
-#define PRODUCT_STARTER_N                           0x0000002F
-#define PRODUCT_PROFESSIONAL                        0x00000030
-#define PRODUCT_PROFESSIONAL_N                      0x00000031
-#define PRODUCT_SB_SOLUTION_SERVER                  0x00000032
-#define PRODUCT_SERVER_FOR_SB_SOLUTIONS             0x00000033
-#define PRODUCT_STANDARD_SERVER_SOLUTIONS           0x00000034
-#define PRODUCT_STANDARD_SERVER_SOLUTIONS_CORE      0x00000035
-#define PRODUCT_SB_SOLUTION_SERVER_EM               0x00000036
-#define PRODUCT_SERVER_FOR_SB_SOLUTIONS_EM          0x00000037
-#define PRODUCT_SOLUTION_EMBEDDEDSERVER             0x00000038
-#define PRODUCT_SOLUTION_EMBEDDEDSERVER_CORE        0x00000039
-#define PRODUCT_PROFESSIONAL_EMBEDDED               0x0000003A
-#define PRODUCT_ESSENTIALBUSINESS_SERVER_MGMT       0x0000003B
-#define PRODUCT_ESSENTIALBUSINESS_SERVER_ADDL       0x0000003C
-#define PRODUCT_ESSENTIALBUSINESS_SERVER_MGMTSVC    0x0000003D
-#define PRODUCT_ESSENTIALBUSINESS_SERVER_ADDLSVC    0x0000003E
-#define PRODUCT_SMALLBUSINESS_SERVER_PREMIUM_CORE   0x0000003F
-#define PRODUCT_CLUSTER_SERVER_V                    0x00000040
-#define PRODUCT_EMBEDDED                            0x00000041
-#define PRODUCT_STARTER_E                           0x00000042
-#define PRODUCT_HOME_BASIC_E                        0x00000043
-#define PRODUCT_HOME_PREMIUM_E                      0x00000044
-#define PRODUCT_PROFESSIONAL_E                      0x00000045
-#define PRODUCT_ENTERPRISE_E                        0x00000046
-#define PRODUCT_ULTIMATE_E                          0x00000047
-#define PRODUCT_ENTERPRISE_EVALUATION               0x00000048
-#define PRODUCT_MULTIPOINT_STANDARD_SERVER          0x0000004C
-#define PRODUCT_MULTIPOINT_PREMIUM_SERVER           0x0000004D
-#define PRODUCT_STANDARD_EVALUATION_SERVER          0x0000004F
-#define PRODUCT_DATACENTER_EVALUATION_SERVER        0x00000050
-#define PRODUCT_ENTERPRISE_N_EVALUATION             0x00000054
-#define PRODUCT_EMBEDDED_AUTOMOTIVE                 0x00000055
-#define PRODUCT_EMBEDDED_INDUSTRY_A                 0x00000056
-#define PRODUCT_THINPC                              0x00000057
-#define PRODUCT_EMBEDDED_A                          0x00000058
-#define PRODUCT_EMBEDDED_INDUSTRY                   0x00000059
-#define PRODUCT_EMBEDDED_E                          0x0000005A
-#define PRODUCT_EMBEDDED_INDUSTRY_E                 0x0000005B
-#define PRODUCT_EMBEDDED_INDUSTRY_A_E               0x0000005C
-#define PRODUCT_STORAGE_WORKGROUP_EVALUATION_SERVER 0x0000005F
-#define PRODUCT_STORAGE_STANDARD_EVALUATION_SERVER  0x00000060
-#define PRODUCT_CORE_ARM                            0x00000061
-#define PRODUCT_CORE_N                              0x00000062
-#define PRODUCT_CORE_COUNTRYSPECIFIC                0x00000063
-#define PRODUCT_CORE_SINGLELANGUAGE                 0x00000064
-#define PRODUCT_CORE                                0x00000065
-#define PRODUCT_PROFESSIONAL_WMC                    0x00000067
-#define PRODUCT_MOBILE_CORE                         0x00000068
-#define PRODUCT_EMBEDDED_INDUSTRY_EVAL              0x00000069
-#define PRODUCT_EMBEDDED_INDUSTRY_E_EVAL            0x0000006A
-#define PRODUCT_EMBEDDED_EVAL                       0x0000006B
-#define PRODUCT_EMBEDDED_E_EVAL                     0x0000006C
-#define PRODUCT_NANO_SERVER                         0x0000006D
-#define PRODUCT_CLOUD_STORAGE_SERVER                0x0000006E
-#define PRODUCT_CORE_CONNECTED                      0x0000006F
-#define PRODUCT_PROFESSIONAL_STUDENT                0x00000070
-#define PRODUCT_CORE_CONNECTED_N                    0x00000071
-#define PRODUCT_PROFESSIONAL_STUDENT_N              0x00000072
-#define PRODUCT_CORE_CONNECTED_SINGLELANGUAGE       0x00000073
-#define PRODUCT_CORE_CONNECTED_COUNTRYSPECIFIC      0x00000074
-#define PRODUCT_CONNECTED_CAR                       0x00000075
-#define PRODUCT_INDUSTRY_HANDHELD                   0x00000076
-#define PRODUCT_PPI_PRO                             0x00000077
-#define PRODUCT_ARM64_SERVER                        0x00000078
-#define PRODUCT_EDUCATION                           0x00000079
-#define PRODUCT_EDUCATION_N                         0x0000007A
-#define PRODUCT_IOTUAP                              0x0000007B
-#define PRODUCT_CLOUD_HOST_INFRASTRUCTURE_SERVER    0x0000007C
-#define PRODUCT_ENTERPRISE_S                        0x0000007D
-#define PRODUCT_ENTERPRISE_S_N                      0x0000007E
-#define PRODUCT_PROFESSIONAL_S                      0x0000007F
-#define PRODUCT_PROFESSIONAL_S_N                    0x00000080
-#define PRODUCT_ENTERPRISE_S_EVALUATION             0x00000081
-#define PRODUCT_ENTERPRISE_S_N_EVALUATION           0x00000082
-#define PRODUCT_HOLOGRAPHIC                         0x00000087
+  PRODUCT_ULTIMATE                            = $00000001;
+  PRODUCT_HOME_BASIC                          = $00000002;
+  PRODUCT_HOME_PREMIUM                        = $00000003;
+  PRODUCT_ENTERPRISE                          = $00000004;
+  PRODUCT_HOME_BASIC_N                        = $00000005;
+  PRODUCT_BUSINESS                            = $00000006;
+  PRODUCT_STANDARD_SERVER                     = $00000007;
+  PRODUCT_DATACENTER_SERVER                   = $00000008;
+  PRODUCT_SMALLBUSINESS_SERVER                = $00000009;
+  PRODUCT_ENTERPRISE_SERVER                   = $0000000A;
+  PRODUCT_STARTER                             = $0000000B;
+  PRODUCT_DATACENTER_SERVER_CORE              = $0000000C;
+  PRODUCT_STANDARD_SERVER_CORE                = $0000000D;
+  PRODUCT_ENTERPRISE_SERVER_CORE              = $0000000E;
+  PRODUCT_ENTERPRISE_SERVER_IA64              = $0000000F;
+  PRODUCT_BUSINESS_N                          = $00000010;
+  PRODUCT_WEB_SERVER                          = $00000011;
+  PRODUCT_CLUSTER_SERVER                      = $00000012;
+  PRODUCT_HOME_SERVER                         = $00000013;
+  PRODUCT_STORAGE_EXPRESS_SERVER              = $00000014;
+  PRODUCT_STORAGE_STANDARD_SERVER             = $00000015;
+  PRODUCT_STORAGE_WORKGROUP_SERVER            = $00000016;
+  PRODUCT_STORAGE_ENTERPRISE_SERVER           = $00000017;
+  PRODUCT_SERVER_FOR_SMALLBUSINESS            = $00000018;
+  PRODUCT_SMALLBUSINESS_SERVER_PREMIUM        = $00000019;
+  PRODUCT_HOME_PREMIUM_N                      = $0000001A;
+  PRODUCT_ENTERPRISE_N                        = $0000001B;
+  PRODUCT_ULTIMATE_N                          = $0000001C;
+  PRODUCT_WEB_SERVER_CORE                     = $0000001D;
+  PRODUCT_MEDIUMBUSINESS_SERVER_MANAGEMENT    = $0000001E;
+  PRODUCT_MEDIUMBUSINESS_SERVER_SECURITY      = $0000001F;
+  PRODUCT_MEDIUMBUSINESS_SERVER_MESSAGING     = $00000020;
+  PRODUCT_SERVER_FOUNDATION                   = $00000021;
+  PRODUCT_HOME_PREMIUM_SERVER                 = $00000022;
+  PRODUCT_SERVER_FOR_SMALLBUSINESS_V          = $00000023;
+  PRODUCT_STANDARD_SERVER_V                   = $00000024;
+  PRODUCT_DATACENTER_SERVER_V                 = $00000025;
+  PRODUCT_ENTERPRISE_SERVER_V                 = $00000026;
+  PRODUCT_DATACENTER_SERVER_CORE_V            = $00000027;
+  PRODUCT_STANDARD_SERVER_CORE_V              = $00000028;
+  PRODUCT_ENTERPRISE_SERVER_CORE_V            = $00000029;
+  PRODUCT_HYPERV                              = $0000002A;
+  PRODUCT_STORAGE_EXPRESS_SERVER_CORE         = $0000002B;
+  PRODUCT_STORAGE_STANDARD_SERVER_CORE        = $0000002C;
+  PRODUCT_STORAGE_WORKGROUP_SERVER_CORE       = $0000002D;
+  PRODUCT_STORAGE_ENTERPRISE_SERVER_CORE      = $0000002E;
+  PRODUCT_STARTER_N                           = $0000002F;
+  PRODUCT_PROFESSIONAL                        = $00000030;
+  PRODUCT_PROFESSIONAL_N                      = $00000031;
+  PRODUCT_SB_SOLUTION_SERVER                  = $00000032;
+  PRODUCT_SERVER_FOR_SB_SOLUTIONS             = $00000033;
+  PRODUCT_STANDARD_SERVER_SOLUTIONS           = $00000034;
+  PRODUCT_STANDARD_SERVER_SOLUTIONS_CORE      = $00000035;
+  PRODUCT_SB_SOLUTION_SERVER_EM               = $00000036;
+  PRODUCT_SERVER_FOR_SB_SOLUTIONS_EM          = $00000037;
+  PRODUCT_SOLUTION_EMBEDDEDSERVER             = $00000038;
+  PRODUCT_SOLUTION_EMBEDDEDSERVER_CORE        = $00000039;
+  PRODUCT_PROFESSIONAL_EMBEDDED               = $0000003A;
+  PRODUCT_ESSENTIALBUSINESS_SERVER_MGMT       = $0000003B;
+  PRODUCT_ESSENTIALBUSINESS_SERVER_ADDL       = $0000003C;
+  PRODUCT_ESSENTIALBUSINESS_SERVER_MGMTSVC    = $0000003D;
+  PRODUCT_ESSENTIALBUSINESS_SERVER_ADDLSVC    = $0000003E;
+  PRODUCT_SMALLBUSINESS_SERVER_PREMIUM_CORE   = $0000003F;
+  PRODUCT_CLUSTER_SERVER_V                    = $00000040;
+  PRODUCT_EMBEDDED                            = $00000041;
+  PRODUCT_STARTER_E                           = $00000042;
+  PRODUCT_HOME_BASIC_E                        = $00000043;
+  PRODUCT_HOME_PREMIUM_E                      = $00000044;
+  PRODUCT_PROFESSIONAL_E                      = $00000045;
+  PRODUCT_ENTERPRISE_E                        = $00000046;
+  PRODUCT_ULTIMATE_E                          = $00000047;
+  PRODUCT_ENTERPRISE_EVALUATION               = $00000048;
+  PRODUCT_MULTIPOINT_STANDARD_SERVER          = $0000004C;
+  PRODUCT_MULTIPOINT_PREMIUM_SERVER           = $0000004D;
+  PRODUCT_STANDARD_EVALUATION_SERVER          = $0000004F;
+  PRODUCT_DATACENTER_EVALUATION_SERVER        = $00000050;
+  PRODUCT_ENTERPRISE_N_EVALUATION             = $00000054;
+  PRODUCT_EMBEDDED_AUTOMOTIVE                 = $00000055;
+  PRODUCT_EMBEDDED_INDUSTRY_A                 = $00000056;
+  PRODUCT_THINPC                              = $00000057;
+  PRODUCT_EMBEDDED_A                          = $00000058;
+  PRODUCT_EMBEDDED_INDUSTRY                   = $00000059;
+  PRODUCT_EMBEDDED_E                          = $0000005A;
+  PRODUCT_EMBEDDED_INDUSTRY_E                 = $0000005B;
+  PRODUCT_EMBEDDED_INDUSTRY_A_E               = $0000005C;
+  PRODUCT_STORAGE_WORKGROUP_EVALUATION_SERVER = $0000005F;
+  PRODUCT_STORAGE_STANDARD_EVALUATION_SERVER  = $00000060;
+  PRODUCT_CORE_ARM                            = $00000061;
+  PRODUCT_CORE_N                              = $00000062;
+  PRODUCT_CORE_COUNTRYSPECIFIC                = $00000063;
+  PRODUCT_CORE_SINGLELANGUAGE                 = $00000064;
+  PRODUCT_CORE                                = $00000065;
+  PRODUCT_PROFESSIONAL_WMC                    = $00000067;
+  PRODUCT_MOBILE_CORE                         = $00000068;
+  PRODUCT_EMBEDDED_INDUSTRY_EVAL              = $00000069;
+  PRODUCT_EMBEDDED_INDUSTRY_E_EVAL            = $0000006A;
+  PRODUCT_EMBEDDED_EVAL                       = $0000006B;
+  PRODUCT_EMBEDDED_E_EVAL                     = $0000006C;
+  PRODUCT_NANO_SERVER                         = $0000006D;
+  PRODUCT_CLOUD_STORAGE_SERVER                = $0000006E;
+  PRODUCT_CORE_CONNECTED                      = $0000006F;
+  PRODUCT_PROFESSIONAL_STUDENT                = $00000070;
+  PRODUCT_CORE_CONNECTED_N                    = $00000071;
+  PRODUCT_PROFESSIONAL_STUDENT_N              = $00000072;
+  PRODUCT_CORE_CONNECTED_SINGLELANGUAGE       = $00000073;
+  PRODUCT_CORE_CONNECTED_COUNTRYSPECIFIC      = $00000074;
+  PRODUCT_CONNECTED_CAR                       = $00000075;
+  PRODUCT_INDUSTRY_HANDHELD                   = $00000076;
+  PRODUCT_PPI_PRO                             = $00000077;
+  PRODUCT_ARM64_SERVER                        = $00000078;
+  PRODUCT_EDUCATION                           = $00000079;
+  PRODUCT_EDUCATION_N                         = $0000007A;
+  PRODUCT_IOTUAP                              = $0000007B;
+  PRODUCT_CLOUD_HOST_INFRASTRUCTURE_SERVER    = $0000007C;
+  PRODUCT_ENTERPRISE_S                        = $0000007D;
+  PRODUCT_ENTERPRISE_S_N                      = $0000007E;
+  PRODUCT_PROFESSIONAL_S                      = $0000007F;
+  PRODUCT_PROFESSIONAL_S_N                    = $00000080;
+  PRODUCT_ENTERPRISE_S_EVALUATION             = $00000081;
+  PRODUCT_ENTERPRISE_S_N_EVALUATION           = $00000082;
+  PRODUCT_HOLOGRAPHIC                         = $00000087;
 
-#define PRODUCT_UNLICENSED                          0xABCDABCD
-*)
+  PRODUCT_UNLICENSED                          = $ABCDABCD;
 
-// IsWow64Process...
+{===============================================================================
+--------------------------------------------------------------------------------
+                                 Other utilities
+--------------------------------------------------------------------------------
+===============================================================================}
+{===============================================================================
+    Other utilities - functions declaration
+===============================================================================}
+
+Function IsWoW64Process(ProcessHandle: THandle): Boolean;
+Function IsRunningUnderWoW64(ProcessID: DWORD): Boolean; overload;
+Function IsRunningUnderWoW64: Boolean; overload;
+
+//------------------------------------------------------------------------------
+
+//Function FunctionIsPresent(const LibraryName,FunctionName: String): Boolean;
 
 implementation
+
+uses
+  StrRect;
 
 {===============================================================================
 --------------------------------------------------------------------------------
@@ -446,7 +477,7 @@ end;
 
 Function GetVersionEx(out VersionInfo: TOSVersionInfo): Boolean;
 begin
-FillChar(VersionInfo,SizeOf(VersionInfo),0);
+FillChar(Addr(VersionInfo)^,SizeOf(VersionInfo),0);
 VersionInfo.dwOSVersionInfoSize := SizeOf(VersionInfo);
 Result := GetVersionEx(@VersionInfo);
 end;
@@ -455,7 +486,7 @@ end;
 
 Function GetVersionEx(out VersionInfo: TOSVersionInfoEx): Boolean;
 begin
-FillChar(VersionInfo,SizeOf(VersionInfo),0);
+FillChar(Addr(VersionInfo)^,SizeOf(VersionInfo),0);
 VersionInfo.dwOSVersionInfoSize := SizeOf(VersionInfo);
 Result := GetVersionEx(@VersionInfo);
 end;
@@ -469,22 +500,31 @@ end;
     Version helper - functions implementation
 ===============================================================================}
 
-Function IsWindowsVersionOrGreater(wMajorVersion,wMinorVersion,wServicePackMajor: Word): Boolean;
+Function IsWindowsVersionOrGreater(MajorVersion,MinorVersion,ServicePackMajor: Word): Boolean;
 var
   OSVersion:      TOSVersionInfoEx;
-  ConditionMask:  Int64;
+  ConditionMask:  UInt64;
+  LastError:      DWORD;
 begin
 FillChar(Addr(OSVersion)^,SizeOf(TOSVersionInfoEx),0);
 OSVersion.dwOSVersionInfoSize := SizeOf(TOSVersionInfoEx);
+OSVersion.dwMajorVersion := MajorVersion;
+OSVersion.dwMinorVersion := MinorVersion;
+OSVersion.wServicePackMajor := ServicePackMajor;
 ConditionMask := VerSetConditionMask(
   VerSetConditionMask(
     VerSetConditionMask(0,VER_MAJORVERSION,VER_GREATER_EQUAL),
     VER_MINORVERSION,VER_GREATER_EQUAL),
-  VER_SERVICEPACKMAJOR,VER_GREATER_EQUAL);
-OSVersion.dwMajorVersion := wMajorVersion;
-OSVersion.dwMinorVersion := wMinorVersion;
-OSVersion.wServicePackMajor := wServicePackMajor;
-Result := VerifyVersionInfo(@OSVersion,VER_MAJORVERSION or VER_MINORVERSION or VER_SERVICEPACKMAJOR,ConditionMask);
+  VER_SERVICEPACKMAJOR,VER_GREATER_EQUAL); 
+If not VerifyVersionInfo(@OSVersion,VER_MAJORVERSION or VER_MINORVERSION or VER_SERVICEPACKMAJOR,ConditionMask) then
+  begin
+    LastError := GetLastError;
+    If LastError = ERROR_OLD_WIN_VERSION then
+      Result := False
+    else
+      raise EWVSystemError.CreateFmt('IsWindowsVersionOrGreater: Failed to verify version info (%.8x).',[LastError]);
+  end
+else Result := True;
 end;
 
 //------------------------------------------------------------------------------
@@ -583,10 +623,71 @@ end;
 Function IsWindowsServer: Boolean;
 var
   OSVersion:  TOSVersionInfoEx;
+  LastError:  DWORD;
 begin
 FillChar(Addr(OSVersion)^,SizeOf(TOSVersionInfoEx),0);
 OSVersion.wProductType := VER_NT_WORKSTATION;
-Result := not VerifyVersionInfo(@OSVersion,VER_PRODUCT_TYPE,VerSetConditionMask(0,VER_PRODUCT_TYPE,VER_EQUAL));
+If not VerifyVersionInfo(@OSVersion,VER_PRODUCT_TYPE,VerSetConditionMask(0,VER_PRODUCT_TYPE,VER_EQUAL)) then
+  begin
+    LastError := GetLastError;
+    If LastError = ERROR_OLD_WIN_VERSION then
+      Result := True
+    else
+      raise EWVSystemError.CreateFmt('IsWindowsServer: Failed to verify version info (%.8x).',[LastError]);
+  end
+else Result := False;
+end;
+
+{===============================================================================
+--------------------------------------------------------------------------------
+                                 Other utilities
+--------------------------------------------------------------------------------
+===============================================================================}
+{===============================================================================
+    Other utilities - functions implementation
+===============================================================================}
+
+Function IsWoW64Process(ProcessHandle: THandle): Boolean;
+type
+  TIsWow64Process = Function(hProcess: THandle; Wow64Process: PBOOL): BOOL; stdcall;
+var
+  ModuleHandle:       THandle;
+  IsWow64ProcessFce:  TIsWow64Process;
+  ResultValue:        BOOL;
+begin
+Result := False;
+ModuleHandle := GetModuleHandle('kernel32.dll');
+If ModuleHandle <> 0 then
+  begin
+    IsWow64ProcessFce := TIsWow64Process(GetProcAddress(ModuleHandle,'IsWow64Process'));
+    If Assigned(IsWow64ProcessFce) then
+      If IsWow64ProcessFce(ProcessHandle,@ResultValue) then
+        Result := ResultValue
+      else
+        raise EWVSystemError.CreateFmt('IsWoW64Process: Failed to check WoW64 (%.8x).',[GetLastError]);
+  end
+else raise EWVSystemError.CreateFmt('IsWoW64Process: Unable to get handle to module kernel32.dll (%.8x).',[GetLastError]);
+
+end;
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+Function IsRunningUnderWoW64(ProcessID: DWORD): Boolean;
+var
+  ProcHandle: THandle;
+begin
+ProcHandle := OpenProcess(PROCESS_QUERY_INFORMATION,False,ProcessID);
+If ProcHandle <> 0 then
+  Result := IsWoW64Process(ProcHandle)
+else
+  raise EWVSystemError.CreateFmt('IsRunningUnderWoW64: Cannot open process (ID: %d) (%.8x).',[ProcessID,GetLastError]);
+end;
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+Function IsRunningUnderWoW64: Boolean;
+begin
+Result := IsWoW64Process(GetCurrentProcess);
 end;
 
 end.
