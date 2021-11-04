@@ -16,7 +16,7 @@
     It also implements and provides version helper functions and macros along
     with some utility functions.
 
-  Version 1.0 (2021-11-04)
+  Version 1.1 (2021-11-04)
 
   Last change 2021-11-04
 
@@ -289,7 +289,7 @@ Function GetVersionEx(lpVersionInfo: POSVersionInfoEx): BOOL; overload; stdcall;
 
 Function VerifyVersionInfoW(lpVersionInfo: POSVersionInfoExW; dwTypeMask: DWORD; dwlConditionMask: UInt64): BOOL; stdcall; external kernel32;
 Function VerifyVersionInfoA(lpVersionInfo: POSVersionInfoExA; dwTypeMask: DWORD; dwlConditionMask: UInt64): BOOL; stdcall; external kernel32;
-Function VerifyVersionInfo(lpVersionInfo: POSVersionInfoEx; dwTypeMask: DWORD; dwlConditionMask: UInt64): BOOL; stdcall;
+Function VerifyVersionInfo(lpVersionInfo: POSVersionInfoEx; dwTypeMask: DWORD; dwlConditionMask: UInt64): BOOL; overload; stdcall;
   external kernel32 name{$IFDEF Unicode}'VerifyVersionInfoW'{$ELSE}'VerifyVersionInfoA'{$ENDIF};
 
 Function VerSetConditionMask(ConditionMask: UInt64; TypeMask: DWORD; Condition: Byte): UInt64; stdcall; external kernel32;
@@ -300,6 +300,8 @@ Function VerSetConditionMask(ConditionMask: UInt64; TypeMask: DWORD; Condition: 
 
 Function GetVersionEx(out VersionInfo: TOSVersionInfo): Boolean; overload;
 Function GetVersionEx(out VersionInfo: TOSVersionInfoEx): Boolean; overload;
+
+Function VerifyVersionInfo(VersionInfo: TOSVersionInfoEx; TypeMask: DWORD; ConditionMask: UInt64): Boolean; overload;
 
 {===============================================================================
 --------------------------------------------------------------------------------
@@ -460,7 +462,17 @@ Function GetProductInfo(OSMajorVersion,OSMinorVersion,SpMajorVersion,SpMinorVers
   Implementation of version helper functions and macros from Windows SDK file
   VersionHelpers.h.
 }
-Function IsWindowsVersionOrGreater(MajorVersion,MinorVersion,ServicePackMajor: Word): Boolean;
+Function IsWindowsVersion(MajorVersion,MinorVersion,ServicePackMajor: Word): Boolean; overload;
+Function IsWindowsVersion(MajorVersion,MinorVersion: Word): Boolean; overload;
+Function IsWindowsVersion(MajorVersion: Word): Boolean; overload;
+
+Function IsWindowsVersionOrLess(MajorVersion,MinorVersion,ServicePackMajor: Word): Boolean; overload;
+Function IsWindowsVersionOrLess(MajorVersion,MinorVersion: Word): Boolean; overload;
+Function IsWindowsVersionOrLess(MajorVersion: Word): Boolean; overload;
+
+Function IsWindowsVersionOrGreater(MajorVersion,MinorVersion,ServicePackMajor: Word): Boolean; overload;
+Function IsWindowsVersionOrGreater(MajorVersion,MinorVersion: Word): Boolean; overload;
+Function IsWindowsVersionOrGreater(MajorVersion: Word): Boolean; overload;
 
 {
   WARNING - Windows XP 64bit is completely different system than WinXP 32bit.
@@ -566,6 +578,24 @@ VersionInfo.dwOSVersionInfoSize := SizeOf(VersionInfo);
 Result := GetVersionEx(@VersionInfo);
 end;
 
+//------------------------------------------------------------------------------
+
+Function VerifyVersionInfo(VersionInfo: TOSVersionInfoEx; TypeMask: DWORD; ConditionMask: UInt64): Boolean;
+var
+  LastError:  DWORD;
+begin
+VersionInfo.dwOSVersionInfoSize := SizeOf(VersionInfo);
+If not VerifyVersionInfo(@VersionInfo,TypeMask,ConditionMask) then
+  begin
+    LastError := GetLastError;
+    If LastError = ERROR_OLD_WIN_VERSION then
+      Result := False
+    else
+      raise EWVSystemError.CreateFmt('VerifyVersionInfo: Failed to verify version info (%.8x).',[LastError]);
+  end
+else Result := True;
+end;
+
 {===============================================================================
 --------------------------------------------------------------------------------
                                   Product info
@@ -608,14 +638,100 @@ end;
     Version helper - functions implementation
 ===============================================================================}
 
+Function IsWindowsVersion(MajorVersion,MinorVersion,ServicePackMajor: Word): Boolean;
+var
+  OSVersion:      TOSVersionInfoEx;
+  ConditionMask:  UInt64;
+begin
+FillChar(Addr(OSVersion)^,SizeOf(TOSVersionInfoEx),0);
+OSVersion.dwMajorVersion := MajorVersion;
+OSVersion.dwMinorVersion := MinorVersion;
+OSVersion.wServicePackMajor := ServicePackMajor;
+ConditionMask := VerSetConditionMask(
+  VerSetConditionMask(
+    VerSetConditionMask(0,VER_MAJORVERSION,VER_EQUAL),
+    VER_MINORVERSION,VER_EQUAL),
+  VER_SERVICEPACKMAJOR,VER_EQUAL);
+Result := VerifyVersionInfo(OSVersion,VER_MAJORVERSION or VER_MINORVERSION or VER_SERVICEPACKMAJOR,ConditionMask);
+end;
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+Function IsWindowsVersion(MajorVersion,MinorVersion: Word): Boolean;
+var
+  OSVersion:      TOSVersionInfoEx;
+  ConditionMask:  UInt64;
+begin
+FillChar(Addr(OSVersion)^,SizeOf(TOSVersionInfoEx),0);
+OSVersion.dwMajorVersion := MajorVersion;
+OSVersion.dwMinorVersion := MinorVersion;
+ConditionMask := VerSetConditionMask(VerSetConditionMask(0,VER_MAJORVERSION,VER_EQUAL),VER_MINORVERSION,VER_EQUAL);
+Result := VerifyVersionInfo(OSVersion,VER_MAJORVERSION or VER_MINORVERSION,ConditionMask);
+end;
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+Function IsWindowsVersion(MajorVersion: Word): Boolean;
+var
+  OSVersion:  TOSVersionInfoEx;
+begin
+FillChar(Addr(OSVersion)^,SizeOf(TOSVersionInfoEx),0);
+OSVersion.dwMajorVersion := MajorVersion;
+Result := VerifyVersionInfo(OSVersion,VER_MAJORVERSION,VerSetConditionMask(0,VER_MAJORVERSION,VER_EQUAL));
+end;
+
+//------------------------------------------------------------------------------
+
+Function IsWindowsVersionOrLess(MajorVersion,MinorVersion,ServicePackMajor: Word): Boolean;
+var
+  OSVersion:      TOSVersionInfoEx;
+  ConditionMask:  UInt64;
+begin
+FillChar(Addr(OSVersion)^,SizeOf(TOSVersionInfoEx),0);
+OSVersion.dwMajorVersion := MajorVersion;
+OSVersion.dwMinorVersion := MinorVersion;
+OSVersion.wServicePackMajor := ServicePackMajor;
+ConditionMask := VerSetConditionMask(
+  VerSetConditionMask(
+    VerSetConditionMask(0,VER_MAJORVERSION,VER_LESS_EQUAL),
+    VER_MINORVERSION,VER_LESS_EQUAL),
+  VER_SERVICEPACKMAJOR,VER_LESS_EQUAL);
+Result := VerifyVersionInfo(OSVersion,VER_MAJORVERSION or VER_MINORVERSION or VER_SERVICEPACKMAJOR,ConditionMask);
+end;
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+Function IsWindowsVersionOrLess(MajorVersion,MinorVersion: Word): Boolean;
+var
+  OSVersion:      TOSVersionInfoEx;
+  ConditionMask:  UInt64;
+begin
+FillChar(Addr(OSVersion)^,SizeOf(TOSVersionInfoEx),0);
+OSVersion.dwMajorVersion := MajorVersion;
+OSVersion.dwMinorVersion := MinorVersion;
+ConditionMask := VerSetConditionMask(VerSetConditionMask(0,VER_MAJORVERSION,VER_LESS_EQUAL),VER_MINORVERSION,VER_LESS_EQUAL);
+Result := VerifyVersionInfo(OSVersion,VER_MAJORVERSION or VER_MINORVERSION,ConditionMask);
+end;
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+Function IsWindowsVersionOrLess(MajorVersion: Word): Boolean;
+var
+  OSVersion:  TOSVersionInfoEx;
+begin
+FillChar(Addr(OSVersion)^,SizeOf(TOSVersionInfoEx),0);
+OSVersion.dwMajorVersion := MajorVersion;
+Result := VerifyVersionInfo(OSVersion,VER_MAJORVERSION,VerSetConditionMask(0,VER_MAJORVERSION,VER_LESS_EQUAL));
+end;
+
+//------------------------------------------------------------------------------
+
 Function IsWindowsVersionOrGreater(MajorVersion,MinorVersion,ServicePackMajor: Word): Boolean;
 var
   OSVersion:      TOSVersionInfoEx;
   ConditionMask:  UInt64;
-  LastError:      DWORD;
 begin
 FillChar(Addr(OSVersion)^,SizeOf(TOSVersionInfoEx),0);
-OSVersion.dwOSVersionInfoSize := SizeOf(TOSVersionInfoEx);
 OSVersion.dwMajorVersion := MajorVersion;
 OSVersion.dwMinorVersion := MinorVersion;
 OSVersion.wServicePackMajor := ServicePackMajor;
@@ -623,19 +739,36 @@ ConditionMask := VerSetConditionMask(
   VerSetConditionMask(
     VerSetConditionMask(0,VER_MAJORVERSION,VER_GREATER_EQUAL),
     VER_MINORVERSION,VER_GREATER_EQUAL),
-  VER_SERVICEPACKMAJOR,VER_GREATER_EQUAL); 
-If not VerifyVersionInfo(@OSVersion,VER_MAJORVERSION or VER_MINORVERSION or VER_SERVICEPACKMAJOR,ConditionMask) then
-  begin
-    LastError := GetLastError;
-    If LastError = ERROR_OLD_WIN_VERSION then
-      Result := False
-    else
-      raise EWVSystemError.CreateFmt('IsWindowsVersionOrGreater: Failed to verify version info (%.8x).',[LastError]);
-  end
-else Result := True;
+  VER_SERVICEPACKMAJOR,VER_GREATER_EQUAL);
+Result := VerifyVersionInfo(OSVersion,VER_MAJORVERSION or VER_MINORVERSION or VER_SERVICEPACKMAJOR,ConditionMask);
 end;
 
-//------------------------------------------------------------------------------
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+Function IsWindowsVersionOrGreater(MajorVersion,MinorVersion: Word): Boolean;
+var
+  OSVersion:      TOSVersionInfoEx;
+  ConditionMask:  UInt64;
+begin
+FillChar(Addr(OSVersion)^,SizeOf(TOSVersionInfoEx),0);
+OSVersion.dwMajorVersion := MajorVersion;
+OSVersion.dwMinorVersion := MinorVersion;
+ConditionMask := VerSetConditionMask(VerSetConditionMask(0,VER_MAJORVERSION,VER_GREATER_EQUAL),VER_MINORVERSION,VER_GREATER_EQUAL);
+Result := VerifyVersionInfo(OSVersion,VER_MAJORVERSION or VER_MINORVERSION,ConditionMask);
+end;
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+Function IsWindowsVersionOrGreater(MajorVersion: Word): Boolean;
+var
+  OSVersion:  TOSVersionInfoEx;
+begin
+FillChar(Addr(OSVersion)^,SizeOf(TOSVersionInfoEx),0);
+OSVersion.dwMajorVersion := MajorVersion;
+Result := VerifyVersionInfo(OSVersion,VER_MAJORVERSION,VerSetConditionMask(0,VER_MAJORVERSION,VER_GREATER_EQUAL));
+end;
+
+//==============================================================================
 
 Function IsWindowsXPOrGreater: Boolean;
 begin
@@ -731,19 +864,10 @@ end;
 Function IsWindowsServer: Boolean;
 var
   OSVersion:  TOSVersionInfoEx;
-  LastError:  DWORD;
 begin
 FillChar(Addr(OSVersion)^,SizeOf(TOSVersionInfoEx),0);
 OSVersion.wProductType := VER_NT_WORKSTATION;
-If not VerifyVersionInfo(@OSVersion,VER_PRODUCT_TYPE,VerSetConditionMask(0,VER_PRODUCT_TYPE,VER_EQUAL)) then
-  begin
-    LastError := GetLastError;
-    If LastError = ERROR_OLD_WIN_VERSION then
-      Result := True
-    else
-      raise EWVSystemError.CreateFmt('IsWindowsServer: Failed to verify version info (%.8x).',[LastError]);
-  end
-else Result := False;
+Result := not VerifyVersionInfo(OSVersion,VER_PRODUCT_TYPE,VerSetConditionMask(0,VER_PRODUCT_TYPE,VER_EQUAL));
 end;
 
 {===============================================================================
@@ -804,7 +928,7 @@ begin
 Result := IsWoW64Process(GetCurrentProcess);
 end;
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
 Function FunctionIsPresent(const LibraryName,FunctionName: String): Boolean;
 var
@@ -820,7 +944,7 @@ If LibHandle <> 0 then
 else raise EWVSystemError.CreateFmt('FunctionIsPresent: Cannot load library (%s) (%.8x).',[LibraryName,GetLastError]);
 end;
 
-//------------------------------------------------------------------------------
+//==============================================================================
 
 Function IsServerR2: Boolean;
 begin
