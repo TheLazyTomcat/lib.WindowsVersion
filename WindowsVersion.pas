@@ -18,7 +18,7 @@
 
   Version 1.1 (2021-11-04)
 
-  Last change 2021-11-04
+  Last change 2021-11-07
 
   ©2021 František Milt
 
@@ -934,10 +934,10 @@ Function FunctionIsPresent(const LibraryName,FunctionName: String): Boolean;
 var
   LibHandle:  THandle;
 begin
-LibHandle := LoadLibrary(PChar(StrToSys(LibraryName)));
+LibHandle := LoadLibrary(PSysChar(StrToSys(LibraryName)));
 If LibHandle <> 0 then
   try
-    Result := Assigned(GetProcAddress(LibHandle,PChar(StrToSys(FunctionName))));
+    Result := Assigned(GetProcAddress(LibHandle,PSysChar(StrToSys(FunctionName))));
   finally
     FreeLibrary(LibHandle);
   end
