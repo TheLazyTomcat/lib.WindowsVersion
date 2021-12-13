@@ -517,10 +517,6 @@ Function IsWindowsVersion(MajorVersion,MinorVersion,ServicePackMajor: Word): Boo
 Function IsWindowsVersion(MajorVersion,MinorVersion: Word): Boolean; overload;
 Function IsWindowsVersion(MajorVersion: Word): Boolean; overload;
 
-Function IsLesserWindowsVersion(MajorVersion,MinorVersion,ServicePackMajor: Word): Boolean; overload;
-Function IsLesserWindowsVersion(MajorVersion,MinorVersion: Word): Boolean; overload;
-Function IsLesserWindowsVersion(MajorVersion: Word): Boolean; overload;
-
 Function IsWindowsVersionOrLess(MajorVersion,MinorVersion,ServicePackMajor: Word): Boolean; overload;
 Function IsWindowsVersionOrLess(MajorVersion,MinorVersion: Word): Boolean; overload;
 Function IsWindowsVersionOrLess(MajorVersion: Word): Boolean; overload;
@@ -528,6 +524,10 @@ Function IsWindowsVersionOrLess(MajorVersion: Word): Boolean; overload;
 Function IsWindowsVersionOrGreater(MajorVersion,MinorVersion,ServicePackMajor: Word): Boolean; overload;
 Function IsWindowsVersionOrGreater(MajorVersion,MinorVersion: Word): Boolean; overload;
 Function IsWindowsVersionOrGreater(MajorVersion: Word): Boolean; overload;
+
+Function IsLesserWindowsVersion(MajorVersion,MinorVersion,ServicePackMajor: Word): Boolean; overload;
+Function IsLesserWindowsVersion(MajorVersion,MinorVersion: Word): Boolean; overload;
+Function IsLesserWindowsVersion(MajorVersion: Word): Boolean; overload;
 
 Function IsGreaterWindowsVersion(MajorVersion,MinorVersion,ServicePackMajor: Word): Boolean; overload;
 Function IsGreaterWindowsVersion(MajorVersion,MinorVersion: Word): Boolean; overload;
@@ -756,50 +756,6 @@ end;
 
 //------------------------------------------------------------------------------
 
-Function IsLesserWindowsVersion(MajorVersion,MinorVersion,ServicePackMajor: Word): Boolean;
-var
-  OSVersion:      TOSVersionInfoEx;
-  ConditionMask:  UInt64;
-begin
-FillChar(Addr(OSVersion)^,SizeOf(TOSVersionInfoEx),0);
-OSVersion.dwMajorVersion := MajorVersion;
-OSVersion.dwMinorVersion := MinorVersion;
-OSVersion.wServicePackMajor := ServicePackMajor;
-ConditionMask := VerSetConditionMask(
-  VerSetConditionMask(
-    VerSetConditionMask(0,VER_MAJORVERSION,VER_LESS),
-    VER_MINORVERSION,VER_LESS),
-  VER_SERVICEPACKMAJOR,VER_LESS);
-Result := VerifyVersionInfo(OSVersion,VER_MAJORVERSION or VER_MINORVERSION or VER_SERVICEPACKMAJOR,ConditionMask);
-end;
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-Function IsLesserWindowsVersion(MajorVersion,MinorVersion: Word): Boolean;
-var
-  OSVersion:      TOSVersionInfoEx;
-  ConditionMask:  UInt64;
-begin
-FillChar(Addr(OSVersion)^,SizeOf(TOSVersionInfoEx),0);
-OSVersion.dwMajorVersion := MajorVersion;
-OSVersion.dwMinorVersion := MinorVersion;
-ConditionMask := VerSetConditionMask(VerSetConditionMask(0,VER_MAJORVERSION,VER_LESS),VER_MINORVERSION,VER_LESS);
-Result := VerifyVersionInfo(OSVersion,VER_MAJORVERSION or VER_MINORVERSION,ConditionMask);
-end;
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-Function IsLesserWindowsVersion(MajorVersion: Word): Boolean;
-var
-  OSVersion:  TOSVersionInfoEx;
-begin
-FillChar(Addr(OSVersion)^,SizeOf(TOSVersionInfoEx),0);
-OSVersion.dwMajorVersion := MajorVersion;
-Result := VerifyVersionInfo(OSVersion,VER_MAJORVERSION,VerSetConditionMask(0,VER_MAJORVERSION,VER_LESS));
-end;
-
-//------------------------------------------------------------------------------
-
 Function IsWindowsVersionOrLess(MajorVersion,MinorVersion,ServicePackMajor: Word): Boolean;
 var
   OSVersion:      TOSVersionInfoEx;
@@ -884,6 +840,50 @@ begin
 FillChar(Addr(OSVersion)^,SizeOf(TOSVersionInfoEx),0);
 OSVersion.dwMajorVersion := MajorVersion;
 Result := VerifyVersionInfo(OSVersion,VER_MAJORVERSION,VerSetConditionMask(0,VER_MAJORVERSION,VER_GREATER_EQUAL));
+end;
+
+//------------------------------------------------------------------------------
+
+Function IsLesserWindowsVersion(MajorVersion,MinorVersion,ServicePackMajor: Word): Boolean;
+var
+  OSVersion:      TOSVersionInfoEx;
+  ConditionMask:  UInt64;
+begin
+FillChar(Addr(OSVersion)^,SizeOf(TOSVersionInfoEx),0);
+OSVersion.dwMajorVersion := MajorVersion;
+OSVersion.dwMinorVersion := MinorVersion;
+OSVersion.wServicePackMajor := ServicePackMajor;
+ConditionMask := VerSetConditionMask(
+  VerSetConditionMask(
+    VerSetConditionMask(0,VER_MAJORVERSION,VER_LESS),
+    VER_MINORVERSION,VER_LESS),
+  VER_SERVICEPACKMAJOR,VER_LESS);
+Result := VerifyVersionInfo(OSVersion,VER_MAJORVERSION or VER_MINORVERSION or VER_SERVICEPACKMAJOR,ConditionMask);
+end;
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+Function IsLesserWindowsVersion(MajorVersion,MinorVersion: Word): Boolean;
+var
+  OSVersion:      TOSVersionInfoEx;
+  ConditionMask:  UInt64;
+begin
+FillChar(Addr(OSVersion)^,SizeOf(TOSVersionInfoEx),0);
+OSVersion.dwMajorVersion := MajorVersion;
+OSVersion.dwMinorVersion := MinorVersion;
+ConditionMask := VerSetConditionMask(VerSetConditionMask(0,VER_MAJORVERSION,VER_LESS),VER_MINORVERSION,VER_LESS);
+Result := VerifyVersionInfo(OSVersion,VER_MAJORVERSION or VER_MINORVERSION,ConditionMask);
+end;
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+Function IsLesserWindowsVersion(MajorVersion: Word): Boolean;
+var
+  OSVersion:  TOSVersionInfoEx;
+begin
+FillChar(Addr(OSVersion)^,SizeOf(TOSVersionInfoEx),0);
+OSVersion.dwMajorVersion := MajorVersion;
+Result := VerifyVersionInfo(OSVersion,VER_MAJORVERSION,VerSetConditionMask(0,VER_MAJORVERSION,VER_LESS));
 end;
 
 //------------------------------------------------------------------------------
