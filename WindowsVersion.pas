@@ -16,9 +16,9 @@
     It also implements and provides version helper functions and macros along
     with some utility functions.
 
-  Version 1.1 (2021-11-04)
+  Version 1.2 (2021-12-13)
 
-  Last change 2021-11-07
+  Last change 2021-12-13
 
   ©2021 František Milt
 
@@ -171,7 +171,7 @@ const
   VER_SUITE_STORAGE_SERVER           = $00002000;
   VER_SUITE_COMPUTE_SERVER           = $00004000;
   VER_SUITE_WH_SERVER                = $00008000;
-
+  VER_SUITE_MULTIUSERTS              = $00020000;
 
 //------------------------------------------------------------------------------
 {
@@ -312,131 +312,182 @@ Function VerifyVersionInfo(VersionInfo: TOSVersionInfoEx; TypeMask: DWORD; Condi
     Product info - product types
 ===============================================================================}
 const
-  PRODUCT_UNDEFINED                           = $00000000;
+  PRODUCT_UNDEFINED                            = $00000000;
 
-  PRODUCT_ULTIMATE                            = $00000001;
-  PRODUCT_HOME_BASIC                          = $00000002;
-  PRODUCT_HOME_PREMIUM                        = $00000003;
-  PRODUCT_ENTERPRISE                          = $00000004;
-  PRODUCT_HOME_BASIC_N                        = $00000005;
-  PRODUCT_BUSINESS                            = $00000006;
-  PRODUCT_STANDARD_SERVER                     = $00000007;
-  PRODUCT_DATACENTER_SERVER                   = $00000008;
-  PRODUCT_SMALLBUSINESS_SERVER                = $00000009;
-  PRODUCT_ENTERPRISE_SERVER                   = $0000000A;
-  PRODUCT_STARTER                             = $0000000B;
-  PRODUCT_DATACENTER_SERVER_CORE              = $0000000C;
-  PRODUCT_STANDARD_SERVER_CORE                = $0000000D;
-  PRODUCT_ENTERPRISE_SERVER_CORE              = $0000000E;
-  PRODUCT_ENTERPRISE_SERVER_IA64              = $0000000F;
-  PRODUCT_BUSINESS_N                          = $00000010;
-  PRODUCT_WEB_SERVER                          = $00000011;
-  PRODUCT_CLUSTER_SERVER                      = $00000012;
-  PRODUCT_HOME_SERVER                         = $00000013;
-  PRODUCT_STORAGE_EXPRESS_SERVER              = $00000014;
-  PRODUCT_STORAGE_STANDARD_SERVER             = $00000015;
-  PRODUCT_STORAGE_WORKGROUP_SERVER            = $00000016;
-  PRODUCT_STORAGE_ENTERPRISE_SERVER           = $00000017;
-  PRODUCT_SERVER_FOR_SMALLBUSINESS            = $00000018;
-  PRODUCT_SMALLBUSINESS_SERVER_PREMIUM        = $00000019;
-  PRODUCT_HOME_PREMIUM_N                      = $0000001A;
-  PRODUCT_ENTERPRISE_N                        = $0000001B;
-  PRODUCT_ULTIMATE_N                          = $0000001C;
-  PRODUCT_WEB_SERVER_CORE                     = $0000001D;
-  PRODUCT_MEDIUMBUSINESS_SERVER_MANAGEMENT    = $0000001E;
-  PRODUCT_MEDIUMBUSINESS_SERVER_SECURITY      = $0000001F;
-  PRODUCT_MEDIUMBUSINESS_SERVER_MESSAGING     = $00000020;
-  PRODUCT_SERVER_FOUNDATION                   = $00000021;
-  PRODUCT_HOME_PREMIUM_SERVER                 = $00000022;
-  PRODUCT_SERVER_FOR_SMALLBUSINESS_V          = $00000023;
-  PRODUCT_STANDARD_SERVER_V                   = $00000024;
-  PRODUCT_DATACENTER_SERVER_V                 = $00000025;
-  PRODUCT_ENTERPRISE_SERVER_V                 = $00000026;
-  PRODUCT_DATACENTER_SERVER_CORE_V            = $00000027;
-  PRODUCT_STANDARD_SERVER_CORE_V              = $00000028;
-  PRODUCT_ENTERPRISE_SERVER_CORE_V            = $00000029;
-  PRODUCT_HYPERV                              = $0000002A;
-  PRODUCT_STORAGE_EXPRESS_SERVER_CORE         = $0000002B;
-  PRODUCT_STORAGE_STANDARD_SERVER_CORE        = $0000002C;
-  PRODUCT_STORAGE_WORKGROUP_SERVER_CORE       = $0000002D;
-  PRODUCT_STORAGE_ENTERPRISE_SERVER_CORE      = $0000002E;
-  PRODUCT_STARTER_N                           = $0000002F;
-  PRODUCT_PROFESSIONAL                        = $00000030;
-  PRODUCT_PROFESSIONAL_N                      = $00000031;
-  PRODUCT_SB_SOLUTION_SERVER                  = $00000032;
-  PRODUCT_SERVER_FOR_SB_SOLUTIONS             = $00000033;
-  PRODUCT_STANDARD_SERVER_SOLUTIONS           = $00000034;
-  PRODUCT_STANDARD_SERVER_SOLUTIONS_CORE      = $00000035;
-  PRODUCT_SB_SOLUTION_SERVER_EM               = $00000036;
-  PRODUCT_SERVER_FOR_SB_SOLUTIONS_EM          = $00000037;
-  PRODUCT_SOLUTION_EMBEDDEDSERVER             = $00000038;
-  PRODUCT_SOLUTION_EMBEDDEDSERVER_CORE        = $00000039;
-  PRODUCT_PROFESSIONAL_EMBEDDED               = $0000003A;
-  PRODUCT_ESSENTIALBUSINESS_SERVER_MGMT       = $0000003B;
-  PRODUCT_ESSENTIALBUSINESS_SERVER_ADDL       = $0000003C;
-  PRODUCT_ESSENTIALBUSINESS_SERVER_MGMTSVC    = $0000003D;
-  PRODUCT_ESSENTIALBUSINESS_SERVER_ADDLSVC    = $0000003E;
-  PRODUCT_SMALLBUSINESS_SERVER_PREMIUM_CORE   = $0000003F;
-  PRODUCT_CLUSTER_SERVER_V                    = $00000040;
-  PRODUCT_EMBEDDED                            = $00000041;
-  PRODUCT_STARTER_E                           = $00000042;
-  PRODUCT_HOME_BASIC_E                        = $00000043;
-  PRODUCT_HOME_PREMIUM_E                      = $00000044;
-  PRODUCT_PROFESSIONAL_E                      = $00000045;
-  PRODUCT_ENTERPRISE_E                        = $00000046;
-  PRODUCT_ULTIMATE_E                          = $00000047;
-  PRODUCT_ENTERPRISE_EVALUATION               = $00000048;
-  PRODUCT_MULTIPOINT_STANDARD_SERVER          = $0000004C;
-  PRODUCT_MULTIPOINT_PREMIUM_SERVER           = $0000004D;
-  PRODUCT_STANDARD_EVALUATION_SERVER          = $0000004F;
-  PRODUCT_DATACENTER_EVALUATION_SERVER        = $00000050;
-  PRODUCT_ENTERPRISE_N_EVALUATION             = $00000054;
-  PRODUCT_EMBEDDED_AUTOMOTIVE                 = $00000055;
-  PRODUCT_EMBEDDED_INDUSTRY_A                 = $00000056;
-  PRODUCT_THINPC                              = $00000057;
-  PRODUCT_EMBEDDED_A                          = $00000058;
-  PRODUCT_EMBEDDED_INDUSTRY                   = $00000059;
-  PRODUCT_EMBEDDED_E                          = $0000005A;
-  PRODUCT_EMBEDDED_INDUSTRY_E                 = $0000005B;
-  PRODUCT_EMBEDDED_INDUSTRY_A_E               = $0000005C;
-  PRODUCT_STORAGE_WORKGROUP_EVALUATION_SERVER = $0000005F;
-  PRODUCT_STORAGE_STANDARD_EVALUATION_SERVER  = $00000060;
-  PRODUCT_CORE_ARM                            = $00000061;
-  PRODUCT_CORE_N                              = $00000062;
-  PRODUCT_CORE_COUNTRYSPECIFIC                = $00000063;
-  PRODUCT_CORE_SINGLELANGUAGE                 = $00000064;
-  PRODUCT_CORE                                = $00000065;
-  PRODUCT_PROFESSIONAL_WMC                    = $00000067;
-  PRODUCT_MOBILE_CORE                         = $00000068;
-  PRODUCT_EMBEDDED_INDUSTRY_EVAL              = $00000069;
-  PRODUCT_EMBEDDED_INDUSTRY_E_EVAL            = $0000006A;
-  PRODUCT_EMBEDDED_EVAL                       = $0000006B;
-  PRODUCT_EMBEDDED_E_EVAL                     = $0000006C;
-  PRODUCT_NANO_SERVER                         = $0000006D;
-  PRODUCT_CLOUD_STORAGE_SERVER                = $0000006E;
-  PRODUCT_CORE_CONNECTED                      = $0000006F;
-  PRODUCT_PROFESSIONAL_STUDENT                = $00000070;
-  PRODUCT_CORE_CONNECTED_N                    = $00000071;
-  PRODUCT_PROFESSIONAL_STUDENT_N              = $00000072;
-  PRODUCT_CORE_CONNECTED_SINGLELANGUAGE       = $00000073;
-  PRODUCT_CORE_CONNECTED_COUNTRYSPECIFIC      = $00000074;
-  PRODUCT_CONNECTED_CAR                       = $00000075;
-  PRODUCT_INDUSTRY_HANDHELD                   = $00000076;
-  PRODUCT_PPI_PRO                             = $00000077;
-  PRODUCT_ARM64_SERVER                        = $00000078;
-  PRODUCT_EDUCATION                           = $00000079;
-  PRODUCT_EDUCATION_N                         = $0000007A;
-  PRODUCT_IOTUAP                              = $0000007B;
-  PRODUCT_CLOUD_HOST_INFRASTRUCTURE_SERVER    = $0000007C;
-  PRODUCT_ENTERPRISE_S                        = $0000007D;
-  PRODUCT_ENTERPRISE_S_N                      = $0000007E;
-  PRODUCT_PROFESSIONAL_S                      = $0000007F;
-  PRODUCT_PROFESSIONAL_S_N                    = $00000080;
-  PRODUCT_ENTERPRISE_S_EVALUATION             = $00000081;
-  PRODUCT_ENTERPRISE_S_N_EVALUATION           = $00000082;
-  PRODUCT_HOLOGRAPHIC                         = $00000087;
+  PRODUCT_ULTIMATE                             = $00000001;
+  PRODUCT_HOME_BASIC                           = $00000002;
+  PRODUCT_HOME_PREMIUM                         = $00000003;
+  PRODUCT_ENTERPRISE                           = $00000004;
+  PRODUCT_HOME_BASIC_N                         = $00000005;
+  PRODUCT_BUSINESS                             = $00000006;
+  PRODUCT_STANDARD_SERVER                      = $00000007;
+  PRODUCT_DATACENTER_SERVER                    = $00000008;
+  PRODUCT_SMALLBUSINESS_SERVER                 = $00000009;
+  PRODUCT_ENTERPRISE_SERVER                    = $0000000A;
+  PRODUCT_STARTER                              = $0000000B;
+  PRODUCT_DATACENTER_SERVER_CORE               = $0000000C;
+  PRODUCT_STANDARD_SERVER_CORE                 = $0000000D;
+  PRODUCT_ENTERPRISE_SERVER_CORE               = $0000000E;
+  PRODUCT_ENTERPRISE_SERVER_IA64               = $0000000F;
+  PRODUCT_BUSINESS_N                           = $00000010;
+  PRODUCT_WEB_SERVER                           = $00000011;
+  PRODUCT_CLUSTER_SERVER                       = $00000012;
+  PRODUCT_HOME_SERVER                          = $00000013;
+  PRODUCT_STORAGE_EXPRESS_SERVER               = $00000014;
+  PRODUCT_STORAGE_STANDARD_SERVER              = $00000015;
+  PRODUCT_STORAGE_WORKGROUP_SERVER             = $00000016;
+  PRODUCT_STORAGE_ENTERPRISE_SERVER            = $00000017;
+  PRODUCT_SERVER_FOR_SMALLBUSINESS             = $00000018;
+  PRODUCT_SMALLBUSINESS_SERVER_PREMIUM         = $00000019;
+  PRODUCT_HOME_PREMIUM_N                       = $0000001A;
+  PRODUCT_ENTERPRISE_N                         = $0000001B;
+  PRODUCT_ULTIMATE_N                           = $0000001C;
+  PRODUCT_WEB_SERVER_CORE                      = $0000001D;
+  PRODUCT_MEDIUMBUSINESS_SERVER_MANAGEMENT     = $0000001E;
+  PRODUCT_MEDIUMBUSINESS_SERVER_SECURITY       = $0000001F;
+  PRODUCT_MEDIUMBUSINESS_SERVER_MESSAGING      = $00000020;
+  PRODUCT_SERVER_FOUNDATION                    = $00000021;
+  PRODUCT_HOME_PREMIUM_SERVER                  = $00000022;
+  PRODUCT_SERVER_FOR_SMALLBUSINESS_V           = $00000023;
+  PRODUCT_STANDARD_SERVER_V                    = $00000024;
+  PRODUCT_DATACENTER_SERVER_V                  = $00000025;
+  PRODUCT_ENTERPRISE_SERVER_V                  = $00000026;
+  PRODUCT_DATACENTER_SERVER_CORE_V             = $00000027;
+  PRODUCT_STANDARD_SERVER_CORE_V               = $00000028;
+  PRODUCT_ENTERPRISE_SERVER_CORE_V             = $00000029;
+  PRODUCT_HYPERV                               = $0000002A;
+  PRODUCT_STORAGE_EXPRESS_SERVER_CORE          = $0000002B;
+  PRODUCT_STORAGE_STANDARD_SERVER_CORE         = $0000002C;
+  PRODUCT_STORAGE_WORKGROUP_SERVER_CORE        = $0000002D;
+  PRODUCT_STORAGE_ENTERPRISE_SERVER_CORE       = $0000002E;
+  PRODUCT_STARTER_N                            = $0000002F;
+  PRODUCT_PROFESSIONAL                         = $00000030;
+  PRODUCT_PROFESSIONAL_N                       = $00000031;
+  PRODUCT_SB_SOLUTION_SERVER                   = $00000032;
+  PRODUCT_SERVER_FOR_SB_SOLUTIONS              = $00000033;
+  PRODUCT_STANDARD_SERVER_SOLUTIONS            = $00000034;
+  PRODUCT_STANDARD_SERVER_SOLUTIONS_CORE       = $00000035;
+  PRODUCT_SB_SOLUTION_SERVER_EM                = $00000036;
+  PRODUCT_SERVER_FOR_SB_SOLUTIONS_EM           = $00000037;
+  PRODUCT_SOLUTION_EMBEDDEDSERVER              = $00000038;
+  PRODUCT_SOLUTION_EMBEDDEDSERVER_CORE         = $00000039;
+  PRODUCT_PROFESSIONAL_EMBEDDED                = $0000003A;
+  PRODUCT_ESSENTIALBUSINESS_SERVER_MGMT        = $0000003B;
+  PRODUCT_ESSENTIALBUSINESS_SERVER_ADDL        = $0000003C;
+  PRODUCT_ESSENTIALBUSINESS_SERVER_MGMTSVC     = $0000003D;
+  PRODUCT_ESSENTIALBUSINESS_SERVER_ADDLSVC     = $0000003E;
+  PRODUCT_SMALLBUSINESS_SERVER_PREMIUM_CORE    = $0000003F;
+  PRODUCT_CLUSTER_SERVER_V                     = $00000040;
+  PRODUCT_EMBEDDED                             = $00000041;
+  PRODUCT_STARTER_E                            = $00000042;
+  PRODUCT_HOME_BASIC_E                         = $00000043;
+  PRODUCT_HOME_PREMIUM_E                       = $00000044;
+  PRODUCT_PROFESSIONAL_E                       = $00000045;
+  PRODUCT_ENTERPRISE_E                         = $00000046;
+  PRODUCT_ULTIMATE_E                           = $00000047;
+  PRODUCT_ENTERPRISE_EVALUATION                = $00000048;
+  PRODUCT_MULTIPOINT_STANDARD_SERVER           = $0000004C;
+  PRODUCT_MULTIPOINT_PREMIUM_SERVER            = $0000004D;
+  PRODUCT_STANDARD_EVALUATION_SERVER           = $0000004F;
+  PRODUCT_DATACENTER_EVALUATION_SERVER         = $00000050;
+  PRODUCT_ENTERPRISE_N_EVALUATION              = $00000054;
+  PRODUCT_EMBEDDED_AUTOMOTIVE                  = $00000055;
+  PRODUCT_EMBEDDED_INDUSTRY_A                  = $00000056;
+  PRODUCT_THINPC                               = $00000057;
+  PRODUCT_EMBEDDED_A                           = $00000058;
+  PRODUCT_EMBEDDED_INDUSTRY                    = $00000059;
+  PRODUCT_EMBEDDED_E                           = $0000005A;
+  PRODUCT_EMBEDDED_INDUSTRY_E                  = $0000005B;
+  PRODUCT_EMBEDDED_INDUSTRY_A_E                = $0000005C;
+  PRODUCT_STORAGE_WORKGROUP_EVALUATION_SERVER  = $0000005F;
+  PRODUCT_STORAGE_STANDARD_EVALUATION_SERVER   = $00000060;
+  PRODUCT_CORE_ARM                             = $00000061;
+  PRODUCT_CORE_N                               = $00000062;
+  PRODUCT_CORE_COUNTRYSPECIFIC                 = $00000063;
+  PRODUCT_CORE_SINGLELANGUAGE                  = $00000064;
+  PRODUCT_CORE                                 = $00000065;
+  PRODUCT_PROFESSIONAL_WMC                     = $00000067;
+{
+  PRODUCT_MOBILE_CORE was removed in newer SDK - version 10.0.22000.0, and
+  probably older ones too, definitely does not contain it.
+}
+  PRODUCT_MOBILE_CORE                          = $00000068 deprecated;
+  PRODUCT_EMBEDDED_INDUSTRY_EVAL               = $00000069;
+  PRODUCT_EMBEDDED_INDUSTRY_E_EVAL             = $0000006A;
+  PRODUCT_EMBEDDED_EVAL                        = $0000006B;
+  PRODUCT_EMBEDDED_E_EVAL                      = $0000006C;
+  PRODUCT_NANO_SERVER                          = $0000006D;
+  PRODUCT_CLOUD_STORAGE_SERVER                 = $0000006E;
+  PRODUCT_CORE_CONNECTED                       = $0000006F;
+  PRODUCT_PROFESSIONAL_STUDENT                 = $00000070;
+  PRODUCT_CORE_CONNECTED_N                     = $00000071;
+  PRODUCT_PROFESSIONAL_STUDENT_N               = $00000072;
+  PRODUCT_CORE_CONNECTED_SINGLELANGUAGE        = $00000073;
+  PRODUCT_CORE_CONNECTED_COUNTRYSPECIFIC       = $00000074;
+  PRODUCT_CONNECTED_CAR                        = $00000075;
+  PRODUCT_INDUSTRY_HANDHELD                    = $00000076;
+  PRODUCT_PPI_PRO                              = $00000077;
+  PRODUCT_ARM64_SERVER                         = $00000078;
+  PRODUCT_EDUCATION                            = $00000079;
+  PRODUCT_EDUCATION_N                          = $0000007A;
+  PRODUCT_IOTUAP                               = $0000007B;
+  PRODUCT_CLOUD_HOST_INFRASTRUCTURE_SERVER     = $0000007C;
+  PRODUCT_ENTERPRISE_S                         = $0000007D;
+  PRODUCT_ENTERPRISE_S_N                       = $0000007E;
+  PRODUCT_PROFESSIONAL_S                       = $0000007F;
+  PRODUCT_PROFESSIONAL_S_N                     = $00000080;
+  PRODUCT_ENTERPRISE_S_EVALUATION              = $00000081;
+  PRODUCT_ENTERPRISE_S_N_EVALUATION            = $00000082;
+  PRODUCT_HOLOGRAPHIC                          = $00000087; 
+  PRODUCT_HOLOGRAPHIC_BUSINESS                 = $00000088;
+  PRODUCT_PRO_SINGLE_LANGUAGE                  = $0000008A;
+  PRODUCT_PRO_CHINA                            = $0000008B;
+  PRODUCT_ENTERPRISE_SUBSCRIPTION              = $0000008C;
+  PRODUCT_ENTERPRISE_SUBSCRIPTION_N            = $0000008D;
+  PRODUCT_DATACENTER_NANO_SERVER               = $0000008F;
+  PRODUCT_STANDARD_NANO_SERVER                 = $00000090;
+  PRODUCT_DATACENTER_A_SERVER_CORE             = $00000091;
+  PRODUCT_STANDARD_A_SERVER_CORE               = $00000092;
+  PRODUCT_DATACENTER_WS_SERVER_CORE            = $00000093;
+  PRODUCT_STANDARD_WS_SERVER_CORE              = $00000094;
+  PRODUCT_UTILITY_VM                           = $00000095;
+  PRODUCT_DATACENTER_EVALUATION_SERVER_CORE    = $0000009F;
+  PRODUCT_STANDARD_EVALUATION_SERVER_CORE      = $000000A0;
+  PRODUCT_PRO_WORKSTATION                      = $000000A1;
+  PRODUCT_PRO_WORKSTATION_N                    = $000000A2;
+  PRODUCT_PRO_FOR_EDUCATION                    = $000000A4;
+  PRODUCT_PRO_FOR_EDUCATION_N                  = $000000A5;
+  PRODUCT_AZURE_SERVER_CORE                    = $000000A8;
+  PRODUCT_AZURE_NANO_SERVER                    = $000000A9;
+  PRODUCT_ENTERPRISEG                          = $000000AB;
+  PRODUCT_ENTERPRISEGN                         = $000000AC;
+  PRODUCT_SERVERRDSH                           = $000000AF;
+  PRODUCT_CLOUD                                = $000000B2;
+  PRODUCT_CLOUDN                               = $000000B3;
+  PRODUCT_HUBOS                                = $000000B4;
+  PRODUCT_ONECOREUPDATEOS                      = $000000B6;
+  PRODUCT_CLOUDE                               = $000000B7;
+  PRODUCT_IOTOS                                = $000000B9;
+  PRODUCT_CLOUDEN                              = $000000BA;
+  PRODUCT_IOTEDGEOS                            = $000000BB;
+  PRODUCT_IOTENTERPRISE                        = $000000BC;
+  PRODUCT_LITE                                 = $000000BD;
+  PRODUCT_IOTENTERPRISES                       = $000000BF;
+  PRODUCT_XBOX_SYSTEMOS                        = $000000C0;
+  PRODUCT_XBOX_NATIVEOS                        = $000000C1;
+  PRODUCT_XBOX_GAMEOS                          = $000000C2;
+  PRODUCT_XBOX_ERAOS                           = $000000C3;
+  PRODUCT_XBOX_DURANGOHOSTOS                   = $000000C4;
+  PRODUCT_XBOX_SCARLETTHOSTOS                  = $000000C5;
+  PRODUCT_AZURE_SERVER_CLOUDHOST               = $000000C7;
+  PRODUCT_AZURE_SERVER_CLOUDMOS                = $000000C8;
+  PRODUCT_CLOUDEDITIONN                        = $000000CA;
+  PRODUCT_CLOUDEDITION                         = $000000CB;
+  PRODUCT_AZURESTACKHCI_SERVER_CORE            = $00000196;
+  PRODUCT_DATACENTER_SERVER_AZURE_EDITION      = $00000197;
+  PRODUCT_DATACENTER_SERVER_CORE_AZURE_EDITION = $00000198;
 
-  PRODUCT_UNLICENSED                          = $ABCDABCD;
+  PRODUCT_UNLICENSED                           = $ABCDABCD;
 
 {===============================================================================
     Product info - functions declaration
@@ -466,6 +517,10 @@ Function IsWindowsVersion(MajorVersion,MinorVersion,ServicePackMajor: Word): Boo
 Function IsWindowsVersion(MajorVersion,MinorVersion: Word): Boolean; overload;
 Function IsWindowsVersion(MajorVersion: Word): Boolean; overload;
 
+Function IsLesserWindowsVersion(MajorVersion,MinorVersion,ServicePackMajor: Word): Boolean; overload;
+Function IsLesserWindowsVersion(MajorVersion,MinorVersion: Word): Boolean; overload;
+Function IsLesserWindowsVersion(MajorVersion: Word): Boolean; overload;
+
 Function IsWindowsVersionOrLess(MajorVersion,MinorVersion,ServicePackMajor: Word): Boolean; overload;
 Function IsWindowsVersionOrLess(MajorVersion,MinorVersion: Word): Boolean; overload;
 Function IsWindowsVersionOrLess(MajorVersion: Word): Boolean; overload;
@@ -474,12 +529,22 @@ Function IsWindowsVersionOrGreater(MajorVersion,MinorVersion,ServicePackMajor: W
 Function IsWindowsVersionOrGreater(MajorVersion,MinorVersion: Word): Boolean; overload;
 Function IsWindowsVersionOrGreater(MajorVersion: Word): Boolean; overload;
 
+Function IsGreaterWindowsVersion(MajorVersion,MinorVersion,ServicePackMajor: Word): Boolean; overload;
+Function IsGreaterWindowsVersion(MajorVersion,MinorVersion: Word): Boolean; overload;
+Function IsGreaterWindowsVersion(MajorVersion: Word): Boolean; overload;
+
 {
   WARNING - Windows XP 64bit is completely different system than WinXP 32bit.
             IsWindowsXPSP3OrGreater will return true on 64bit XP even when only
             SP2 (or lower) is installed, that is because this system has
             version 5.2 (it is based on Windows Server 2003), which is above
             5.1 for 32bit XP.
+
+  NOTE - From windows 8.1 up, an application must explicitly manifest support
+         for a given system to get real Windows version, otherwise the system
+         will identify itself as Windows 8.
+
+  NOTE - Windows 11 are reporting themselves as Windows 10.
 }
 Function IsWindowsXPOrGreater: Boolean;
 Function IsWindowsXPSP1OrGreater: Boolean;
@@ -494,8 +559,17 @@ Function IsWindows8OrGreater: Boolean;
 Function IsWindows8Point1OrGreater: Boolean;
 Function IsWindowsThresholdOrGreater: Boolean;
 Function IsWindows10OrGreater: Boolean;
+{
+  WARNING - Windows 11 cannot, at this time (december 2021), be differentiated
+            from Windows 10 without using some bullshit strings parsing.
+            Thanks Microsoft!
+            IsWindows11OrGreater is checking build number (>=22000), but this
+            is not documented and probably not future-proof.
+}
+Function IsWindows11OrGreater: Boolean;
 Function IsWindowsServer: Boolean;
-// Sure, there are Windows 11, but i do not have SDK for them atm., so later...
+
+Function IsActiveSessionCountLimited: Boolean;
 
 {===============================================================================
 --------------------------------------------------------------------------------
@@ -682,6 +756,50 @@ end;
 
 //------------------------------------------------------------------------------
 
+Function IsLesserWindowsVersion(MajorVersion,MinorVersion,ServicePackMajor: Word): Boolean;
+var
+  OSVersion:      TOSVersionInfoEx;
+  ConditionMask:  UInt64;
+begin
+FillChar(Addr(OSVersion)^,SizeOf(TOSVersionInfoEx),0);
+OSVersion.dwMajorVersion := MajorVersion;
+OSVersion.dwMinorVersion := MinorVersion;
+OSVersion.wServicePackMajor := ServicePackMajor;
+ConditionMask := VerSetConditionMask(
+  VerSetConditionMask(
+    VerSetConditionMask(0,VER_MAJORVERSION,VER_LESS),
+    VER_MINORVERSION,VER_LESS),
+  VER_SERVICEPACKMAJOR,VER_LESS);
+Result := VerifyVersionInfo(OSVersion,VER_MAJORVERSION or VER_MINORVERSION or VER_SERVICEPACKMAJOR,ConditionMask);
+end;
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+Function IsLesserWindowsVersion(MajorVersion,MinorVersion: Word): Boolean;
+var
+  OSVersion:      TOSVersionInfoEx;
+  ConditionMask:  UInt64;
+begin
+FillChar(Addr(OSVersion)^,SizeOf(TOSVersionInfoEx),0);
+OSVersion.dwMajorVersion := MajorVersion;
+OSVersion.dwMinorVersion := MinorVersion;
+ConditionMask := VerSetConditionMask(VerSetConditionMask(0,VER_MAJORVERSION,VER_LESS),VER_MINORVERSION,VER_LESS);
+Result := VerifyVersionInfo(OSVersion,VER_MAJORVERSION or VER_MINORVERSION,ConditionMask);
+end;
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+Function IsLesserWindowsVersion(MajorVersion: Word): Boolean;
+var
+  OSVersion:  TOSVersionInfoEx;
+begin
+FillChar(Addr(OSVersion)^,SizeOf(TOSVersionInfoEx),0);
+OSVersion.dwMajorVersion := MajorVersion;
+Result := VerifyVersionInfo(OSVersion,VER_MAJORVERSION,VerSetConditionMask(0,VER_MAJORVERSION,VER_LESS));
+end;
+
+//------------------------------------------------------------------------------
+
 Function IsWindowsVersionOrLess(MajorVersion,MinorVersion,ServicePackMajor: Word): Boolean;
 var
   OSVersion:      TOSVersionInfoEx;
@@ -766,6 +884,50 @@ begin
 FillChar(Addr(OSVersion)^,SizeOf(TOSVersionInfoEx),0);
 OSVersion.dwMajorVersion := MajorVersion;
 Result := VerifyVersionInfo(OSVersion,VER_MAJORVERSION,VerSetConditionMask(0,VER_MAJORVERSION,VER_GREATER_EQUAL));
+end;
+
+//------------------------------------------------------------------------------
+
+Function IsGreaterWindowsVersion(MajorVersion,MinorVersion,ServicePackMajor: Word): Boolean;
+var
+  OSVersion:      TOSVersionInfoEx;
+  ConditionMask:  UInt64;
+begin
+FillChar(Addr(OSVersion)^,SizeOf(TOSVersionInfoEx),0);
+OSVersion.dwMajorVersion := MajorVersion;
+OSVersion.dwMinorVersion := MinorVersion;
+OSVersion.wServicePackMajor := ServicePackMajor;
+ConditionMask := VerSetConditionMask(
+  VerSetConditionMask(
+    VerSetConditionMask(0,VER_MAJORVERSION,VER_GREATER),
+    VER_MINORVERSION,VER_GREATER),
+  VER_SERVICEPACKMAJOR,VER_GREATER);
+Result := VerifyVersionInfo(OSVersion,VER_MAJORVERSION or VER_MINORVERSION or VER_SERVICEPACKMAJOR,ConditionMask);
+end;
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+Function IsGreaterWindowsVersion(MajorVersion,MinorVersion: Word): Boolean;
+var
+  OSVersion:      TOSVersionInfoEx;
+  ConditionMask:  UInt64;
+begin
+FillChar(Addr(OSVersion)^,SizeOf(TOSVersionInfoEx),0);
+OSVersion.dwMajorVersion := MajorVersion;
+OSVersion.dwMinorVersion := MinorVersion;
+ConditionMask := VerSetConditionMask(VerSetConditionMask(0,VER_MAJORVERSION,VER_GREATER),VER_MINORVERSION,VER_GREATER);
+Result := VerifyVersionInfo(OSVersion,VER_MAJORVERSION or VER_MINORVERSION,ConditionMask);
+end;
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+Function IsGreaterWindowsVersion(MajorVersion: Word): Boolean;
+var
+  OSVersion:  TOSVersionInfoEx;
+begin
+FillChar(Addr(OSVersion)^,SizeOf(TOSVersionInfoEx),0);
+OSVersion.dwMajorVersion := MajorVersion;
+Result := VerifyVersionInfo(OSVersion,VER_MAJORVERSION,VerSetConditionMask(0,VER_MAJORVERSION,VER_GREATER));
 end;
 
 //==============================================================================
@@ -861,6 +1023,24 @@ end;
 
 //------------------------------------------------------------------------------
 
+Function IsWindows11OrGreater: Boolean;
+var
+  OSVersion:  TOSVersionInfoEx;
+begin
+{
+  The major or minor version has to be greater than that of Win10, or they
+  equal to Win10 and at the same time the build number is equal or grater than
+  22000.
+}
+FillChar(Addr(OSVersion)^,SizeOf(TOSVersionInfoEx),0);
+OSVersion.dwBuildNumber := 22000;
+Result := IsGreaterWindowsVersion(MajorVersion(WIN32_WINNT_WIN10),MinorVersion(WIN32_WINNT_WIN10)) or
+          (IsWindowsVersion(MajorVersion(WIN32_WINNT_WIN10),MinorVersion(WIN32_WINNT_WIN10)) and
+           VerifyVersionInfo(OSVersion,VER_BUILDNUMBER,VerSetConditionMask(0,VER_BUILDNUMBER,VER_GREATER_EQUAL)));
+end;
+
+//------------------------------------------------------------------------------
+
 Function IsWindowsServer: Boolean;
 var
   OSVersion:  TOSVersionInfoEx;
@@ -868,6 +1048,23 @@ begin
 FillChar(Addr(OSVersion)^,SizeOf(TOSVersionInfoEx),0);
 OSVersion.wProductType := VER_NT_WORKSTATION;
 Result := not VerifyVersionInfo(OSVersion,VER_PRODUCT_TYPE,VerSetConditionMask(0,VER_PRODUCT_TYPE,VER_EQUAL));
+end;
+
+//==============================================================================
+
+Function IsActiveSessionCountLimited: Boolean;
+var
+  ConditionMask:      UInt64;
+  VersionInfo:        TOSVersionInfoEx;
+  SuiteTerminal:      Boolean;
+  SuiteSingleUserTS:  Boolean;
+begin
+ConditionMask := VerSetConditionMask(0,VER_SUITENAME,VER_AND);
+VersionInfo.wSuiteMask := VER_SUITE_TERMINAL;
+SuiteTerminal := VerifyVersionInfo(VersionInfo,VER_SUITENAME,ConditionMask);
+VersionInfo.wSuiteMask := VER_SUITE_SINGLEUSERTS;
+SuiteSingleUserTS := VerifyVersionInfo(VersionInfo,VER_SUITENAME,ConditionMask);
+Result := not(SuiteTerminal and not SuiteSingleUserTS);
 end;
 
 {===============================================================================
